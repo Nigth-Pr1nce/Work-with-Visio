@@ -397,6 +397,7 @@ class MainWindow(QMainWindow):
         if len(self.position_for_numbers[self.name_file]) > self.index_room:
             try:
                 self.position_for_numbers[self.name_file][self.index_room][-1].setBrush(QColor('green'))
+                self.position_for_numbers[self.name_file][self.index_room][-1].name = self.input_name.text().capitalize()
                 self.position_for_numbers[self.name_file][self.index_room][-1] = self.input_name.text().capitalize()
             except AttributeError: pass
             self.input_name.clear()
@@ -584,13 +585,16 @@ class MainWindow(QMainWindow):
         """ По принципу лабиринта определяет помещения в которые можно попасть либо от лестницы
         либо от двери которая соединена с 1 помещением"""
         try:
-            for item in main_room.collidingItems():
-                if item in self.placement_doors_on_scene[scene]:
-                    for room in item.collidingItems():
-                        if room not in self.path_of_rooms and room not in self.finished_rooms[scene] and type(room) is Room:
-                            self.path_of_rooms.append(room)
-                            self.doors_loop(scene,room)
-            main_room.setBrush(QColor('gray'))
+            if main_room.active:
+                for item in main_room.collidingItems():
+                    if item in self.placement_doors_on_scene[scene]:
+                        for room in item.collidingItems():
+                            if room not in self.path_of_rooms and room not in self.finished_rooms[scene] and type(room) is Room:
+                                self.path_of_rooms.append(room)
+                                self.doors_loop(scene,room)
+                main_room.setBrush(QColor('gray'))
+            else:
+                return
         except Exception as e:
             print('doors_loop ERROR', e)
         try:
@@ -687,7 +691,7 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     print('СТЕНА НЕ УДАЛЕНА', e)
             self.dict_rooms_on_scene[scene] = self.room_shapes
-            self.remove_missing_room()
+            # self.remove_missing_room()
         
     def update_all_rooms(self, append_room=None):
         """ Должны пробегать по сценам и проверять присутствует ли тот же объект в координатах
@@ -774,6 +778,9 @@ class MainWindow(QMainWindow):
         context = QMenu(self)
         element_scene = self.worksheet.scene().itemAt(self.worksheet.mapToScene(self.worksheet.mapFromParent(self.centralwidget.mapFromParent(self.position_mouse))), QTransform())
         if type(element_scene) is Room:
+            get = QAction('Объект и инфо', self)
+            context.addAction(get)
+            get.triggered.connect(lambda: print(element_scene.get_info()))
             if element_scene.active:
                 delete = QAction('Удалить',self)
                 context.addAction(delete)
@@ -917,6 +924,19 @@ class MainWindow(QMainWindow):
         if event.key() == (Qt.Key_Control and Qt.Key_Y):
             self.time_travel_for_naming_rooms()
 
+    def mousePressEvent(self,event):
+        """ Не знаю для чего по идее для контекстного меню, однако оно реализовано не через сей метод"""
+        """ Метод нигде не юзается"""
+        # print('1111')
+        self.position_mouse = self.cur.pos()
+        if event.button() == Qt.RightButton:
+            pass
+
+        if event.button() == Qt.LeftButton:
+            try:
+                if not self.move_stat is None:
+                    self.move_stat = None
+            except: pass
 
 
 
